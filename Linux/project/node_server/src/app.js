@@ -2,7 +2,8 @@
  *   app.js
  *
  *   Author: Daniel Alner
- *
+ *   Copyright (C) 2015
+ *   GNU GENERAL PUBLIC LICENSE
  */
 
 //requirements
@@ -12,8 +13,11 @@ var app = express();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
 var say = require('say')
-
-
+var watson = require('watson-developer-cloud');
+var fs = require('fs');
+var exec = require('exec');
+// credentials for watson api
+var creds = require('./creds.json');
 
 //library location of the shared objects
 var LIBLOC = '../api_wrapper/apiwrapper';
@@ -35,15 +39,22 @@ var BatteryLevel = -1;
 function setCoreActions() {
   actionList.stand        = 2;
 //page 3 is walk ready
-  actionList.sit          = 4;
-  actionList.sitshtdown   = 6;
-  actionList.wave         = 10;
-  actionList.handshake    = 11;
-  actionList.excite       = 12;
-  actionList.thanks       = 13;
-  actionList.superhero    = 14;
-  actionList.dance        = 15;
-  actionList.nod          = 16;
+actionList.sit          = 4;
+actionList.sitshtdown   = 6;
+actionList.wave         = 10;
+actionList.handshake    = 11;
+actionList.excite       = 12;
+actionList.thanks       = 13;
+actionList.superhero    = 14;
+actionList.dance        = 15;
+actionList.nod          = 16;
+}
+
+// backup if watson creds on not
+// available, this fallback is for 
+// linux only
+function speechBackup(string) {
+  say.speak(null, string);
 }
 
 /**************************************
@@ -66,7 +77,7 @@ var general = ffi.Library(LIBLOC, {
     'ServoShutdownJS' : ['void', [] ],
     // on all servos
     'ServoStartupJS' : ['void', [] ]
-});
+  });
 /******* REST API ***************/
 //http://<ipaddress>/Options/GetName
 //Still working this part out, UNCOMPLETED
@@ -85,22 +96,22 @@ app.get('/diagnostics/initialize', function (req, res) {
 var actions = ffi.Library(LIBLOC, {
     // call page numbers
     'PlayActionJS' : ['int', ['int'] ]
-});
+  });
 /******* REST API ***************/
 //http://<ipaddress>/Action/Call/name
 //Call action by name.
 app.get('/action/call/:name', function (req, res) {
-    console.log(req);
+  console.log(req);
 });
 //http://<ipaddress>/Action/Add/name
 //Add action by name. Must be unique action names. System action names already exist, such as Stand, Sit, Wave, Exite...etc
 app.get('action/add/:name', function (req, res) {
-    console.log(req);
+  console.log(req);
 });
 //http://<ipaddress>/Action/Position/name?position?server
 //Still being determined how to do, UNCOMPLETED
 app.get('action/position/:name:position:server', function (req, res) {
-    console.log(req);
+  console.log(req);
 });
 /**************************************
 ***                   Walking        **
@@ -120,7 +131,7 @@ var walk = ffi.Library(LIBLOC, {
 
     // walking speed set
     //TBD
-});
+  });
 /******* REST API ***************/
 //http://<ipaddress>/Walk/bool
 //Turn walk on or off (use true/false, on/off)
@@ -139,7 +150,7 @@ app.get('walk/position/:x:y', function (req, res){
 var head = ffi.Library(LIBLOC, {
     // head pan (double) tilt (double) motion
     // 'MoveHeadByAngleJS' : ['void', ['double', 'double']]
-});
+  });
 /******* REST API ***************/
 //http://<ipaddress>/Head/Position/angle?degree
 //Still working this part out, UNCOMPLETED
@@ -160,9 +171,9 @@ var diagnostics = ffi.Library(LIBLOC, {
     // check wifi connectivity and values
 
     // give alert of any other issues and return
-});
+  });
 /***                Battery       **/
-  function getBatteryVoltLevel(){
+function getBatteryVoltLevel(){
     // from here, this returns a voltage, possible change to percent
     BatteryLevel = diagnostics.BatteryVoltLevelJS();
   }
@@ -172,7 +183,7 @@ var diagnostics = ffi.Library(LIBLOC, {
     servosValues = diagnostics.CheckServosJS();
     socket.emit('servovalues', servosValues);
   }**/
-/******* REST API ***************/
+  /******* REST API ***************/
 //http://<ipaddress>/Diagnostics/check
 //Still working this part out, UNCOMPLETED
 app.get('/diagnostics/check', function (req, res){
@@ -190,7 +201,7 @@ var sensors = ffi.Library(LIBLOC,{
     // add sensor
     // flesh this out a bit more
 
-});
+  });
 
 
 /**************************************
@@ -200,8 +211,8 @@ io.on('connection',function(socket) {
   console.log("device connected");
   // start battery emit to client
   setInterval(function(){
-      io.emit('batterylevel', BatteryLevel);
-    },2000);
+    io.emit('batterylevel', BatteryLevel);
+  },2000);
   /***                Initialize       **/
   socket.on('initialize', function () {
     setCoreActions();
@@ -221,11 +232,11 @@ io.on('connection',function(socket) {
 
   /***                disconnect       **/
   socket.on('disconnect',function(){
-      console.log('disconnecting');
+    console.log('disconnecting');
       //notify app and sit robot
       actions.PlayActionJS(actionList.sit);  // sit robot
       console.log('disconnected');
-  });
+    });
 
   /***                action       **/
   socket.on('action',function(action){
@@ -267,10 +278,43 @@ io.on('connection',function(socket) {
     head.MoveHeadByAngleJS (pan, tilt);
   });
   /***                speech       **/
-  // speech module only works on linux (currently untested)
+  // speech module only works on linux
   socket.on('speech', function(string){
-    say.speak(null, string);
-  });
+    /**************************************
+      ***              IBM Watson         **
+      ***  creds is a require file json 
+      ***  format with
+      ***  { username: <name>,
+      ***  password: <password>,
+      ***  version: 'v1' }
+      ***  remember, this is not the blumix 
+      ***  name and password
+      ***  api creds unique to api
+      ****************************************/
+      console.log("attempting to play audio");
+      if(creds.username !== null)
+        var text_to_speech = watson.text_to_speech(creds);
+      else {
+        // if there is no creds, then just use the linux backup speech
+        // module
+        speechBackup(string);
+        return;
+      }
+
+      var params = {
+        text: string,
+        voice:'VoiceEnUsMichael',
+        accept:'audio/wav'
+      };
+
+      // write to speech text to file
+      // once signalled completion, then play file
+      text_to_speech.synthesize(params).on('end', function() {
+        exec('aplay output.wav', function(err,out,code) {
+          console.log(err);
+        });
+      }).pipe(fs.createWriteStream('output.wav'));
+    });
 });
 
 http.listen(2114,function(){
@@ -280,10 +324,10 @@ http.listen(2114,function(){
   // setInterval(checkServos(), 5000);  // check the heartbeat every 5 second (up for change)
   
   setCoreActions();
-    if(general.InitializeJS()) {
+  if(general.InitializeJS()) {
       actions.PlayActionJS(actionList.sit);  // sit robot
       console.log("successful robot init");
     }
     else
       console.log("error initializing robot");
-});
+  });
