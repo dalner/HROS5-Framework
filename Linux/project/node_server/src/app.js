@@ -12,12 +12,13 @@ var ffi = require('ffi');
 var app = express();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
-var say = require('say')
 var watson = require('watson-developer-cloud');
 var fs = require('fs');
-var exec = require('exec');
+var child_process = require('child_process');
 // credentials for watson api
-var creds = require('./creds.json');
+var nlccreds = require('./nlccreds.json');
+var watsonspeech = require('./watsonspeech');
+var watsonnlc = require('./watsonnlproc');
 
 //library location of the shared objects
 var LIBLOC = '../api_wrapper/apiwrapper';
@@ -50,12 +51,6 @@ actionList.dance        = 15;
 actionList.nod          = 16;
 }
 
-// backup if watson creds on not
-// available, this fallback is for 
-// linux only
-function speechBackup(string) {
-  say.speak(null, string);
-}
 
 /**************************************
 ***              Web Service         **
@@ -280,41 +275,12 @@ io.on('connection',function(socket) {
   /***                speech       **/
   // speech module only works on linux
   socket.on('speech', function(string){
-    /**************************************
-      ***              IBM Watson         **
-      ***  creds is a require file json 
-      ***  format with
-      ***  { username: <name>,
-      ***  password: <password>,
-      ***  version: 'v1' }
-      ***  remember, this is not the blumix 
-      ***  name and password
-      ***  api creds unique to api
-      ****************************************/
-      console.log("attempting to play audio");
-      if(creds.username !== null)
-        var text_to_speech = watson.text_to_speech(creds);
-      else {
-        // if there is no creds, then just use the linux backup speech
-        // module
-        speechBackup(string);
-        return;
-      }
+    watsonspeech.speak(string);
+  });
 
-      var params = {
-        text: string,
-        voice:'VoiceEnUsMichael',
-        accept:'audio/wav'
-      };
-
-      // write to speech text to file
-      // once signalled completion, then play file
-      text_to_speech.synthesize(params).on('end', function() {
-        exec('aplay output.wav', function(err,out,code) {
-          console.log(err);
-        });
-      }).pipe(fs.createWriteStream('output.wav'));
-    });
+/***             natural language processor       **/
+socket.on('naturallangproc', function(string) {
+    watsonnlc.classify(string);
 });
 
 http.listen(2114,function(){
