@@ -6,7 +6,8 @@
     <title>Hello World!</title>
 
     <script src="js/jquery1.11.1.js"></script>
-    <script src="js/21CRobot-API.min.js"></script>
+    <script src="js/hros_js_api.js"></script>
+    <script src="node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
 
     <!--joystick scripts-->
     <script src="js/virtualjoystick.js"></script>
@@ -25,7 +26,31 @@
 <body>
     <script type="text/javascript">
         var JSRobotCalls = new HROS_JS();
+        Connect();
+        function Connect(){
+            JSRobotCalls.Connect("localhost");
+            $("#connectionStatus").text("Connecting");
+        }
+        // check the connection status and update UI
+        setInterval(function(){
+            var status = JSRobotCalls.ConnectionStatus();
+            if(status === JSRobotCalls.ConnectedStates.CONNECTED){
+                $("#actionCalls").show("fast");
+                $("#connectionStatus").text("Connected");
+            }
+            else if(status === JSRobotCalls.ConnectedStates.DISCONNECTED){
+                $("#actionCalls").hide();
+                $("#walkingOn").hide();
+                $("#connectionStatus").text("Disconnected");
+            }
+            else if(status === JSRobotCalls.ConnectedStates.CONNECTING){
+                $("#connectionStatus").text("Connecting")
+                $("#actionCalls").hide();
+            }
+            else
+                $("#connectionStatus").text("Failed");
 
+        },600);
         /**********************************************************
         *****               Joystick
         **********************************************************/
@@ -71,20 +96,31 @@
         *****                 Speech                *******
         /**************************************************/
         function SaySomething() {
-            JSRobotCalls.SayString("Hello! My name is Robot.");
+            JSRobotCalls.SayString($("#SpeechToSay").val());
+        }
+        /**************************************************
+        *****        Natural Language Processor     *******
+        /**************************************************/
+        function NaturalLanguageProcessor() {
+            JSRobotCalls.NaturalLangProc($("#NaturalLanguage").val());
         }
     </script>
         <!--=========================================
             =connectionStatus: HROS looks for connectionStatus to update connection status
             =buttons to call the actions using the object created on init
             =========================================-->
-    <div id="actionCalls">
-        <button name="button" onclick="JSRobotCalls.PlayAction('stand')">Stand</button>
-        <button name="button" onclick="JSRobotCalls.PlayAction('sit')">Sit</button>
-        <button name="button" onclick="JSRobotCalls.PlayAction('wave')">Wave</button>
-        <button name="button" id="walkToggle" onclick="toggleWalking()">Turn walk on</button>
-        <button name="button" onclick="SaySomething()">Say Something</button> 
-    </div>
+        <button name="button" onclick="Connect()">Connect</button> 
+        Connection Status: <label id="connectionStatus">Updating...</label>
+        <div style="display:none" id="actionCalls">
+            <button name="button" onclick="JSRobotCalls.PlayAction('stand')">Stand</button>
+            <button name="button" onclick="JSRobotCalls.PlayAction('sit')">Sit</button>
+            <button name="button" onclick="JSRobotCalls.PlayAction('wave')">Wave</button>
+            <button name="button" id="walkToggle" onclick="toggleWalking()">Turn walk on</button>
+            <input class="form-control" id="SpeechToSay" placeholder="What To Say">
+            <button name="button" onclick="SaySomething()">Say Something</button> 
+            <input class="form-control" id="NaturalLanguage" placeholder="Natural Language Processor (Hey, Stand up)">
+            <button name="button" onclick="NaturalLanguageProcessor()">Do it!</button> 
+        </div>
     <div id="walkingOn" style="display:none">
         <h3>Select anywhere to activate joystick</h3>
         <div id="container"></div>

@@ -1,8 +1,17 @@
+/************************************************
+*** Copyright (C) Jul 2015 Daniel Alner
+*** HROS5
+*** GNU GENERAL PUBLIC LICENSE
+************************************************/
+
 var watson = require('watson-developer-cloud');
 // used for the watson classifer id for natural language
 // in the form export.classifier = function() {return <classid>;} 
 var nlcclassid = require('./nclclassid');
 var watsonspeech = require('./watsonspeech');
+var robotaction = require('./robotcommunication');
+var nlccreds = require('./nlccreds.json');
+
 
 exports.classify = function(string) { 
 /**************************************
@@ -31,10 +40,14 @@ exports.classify = function(string) {
           case "standup":
           console.log("standing up");
           watsonspeech.speak("sure, i can stand up");
+          var actionList = robotaction.GetActionList();
+          robotaction.PlayAction(actionList.stand);
           break;
           case "sitdown":
           console.log("sitting down up");
           watsonspeech.speak("yep, i can sit down");
+          var actionList = robotaction.GetActionList();
+          robotaction.PlayAction(actionList.sit);
           break;
           case "introduction":
           watsonspeech.speak("I'm doing great");
@@ -42,5 +55,4 @@ exports.classify = function(string) {
         }
       }
     });
-  });
 }

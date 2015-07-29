@@ -1,3 +1,9 @@
+/************************************************
+*** Copyright (C) Jul 2015 Daniel Alner
+*** HROS5
+*** GNU GENERAL PUBLIC LICENSE
+************************************************/
+
 var ttscreds = require('./ttscreds.json');
 var say = require('say');
 var watson = require('watson-developer-cloud');
