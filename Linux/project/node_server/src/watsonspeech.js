@@ -35,22 +35,22 @@ exports.speak = function(string) {
 
     var params = {
       text: string,
-      voice:'VoiceEnUsMichael',
+      voice:'en-US_MichaelVoice',
       accept:'audio/wav'
     };
     try {
 	    // write to speech text to file
 	    // once signalled completion, then play file
 	    text_to_speech.synthesize(params).on('end', function() {
-	      child_process.exec('aplay output.wav', function(err,out,code) {
-	        console.log(err);
+       child_process.exec('aplay output.wav', function(err,out,code) {
+         console.log(err);
 	        //speechBackup(string);
 	      });
-	    }).pipe(fs.createWriteStream('output.wav'));
+     }).pipe(fs.createWriteStream('output.wav'));
     } catch(ex) {
     	console.log(ex);
     }
-}
+  }
 
 // backup if watson creds on not
 // available, this fallback is for 
