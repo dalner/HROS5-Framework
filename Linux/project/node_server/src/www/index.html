@@ -1,32 +1,28 @@
  <!DOCTYPE html>
-<html>
-<head>
+ <html>
+ <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <title>Hello World!</title>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <script src="js/jquery1.11.1.js"></script>
     <script src="js/hros_js_api.js"></script>
-    <script src="node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
-
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
+    <link href="layout.css" rel="stylesheet">
     <!--joystick scripts-->
     <script src="js/virtualjoystick.js"></script>
-    <style>
-    #container {
-            width       : 700px;
-            height      : 1000px;
-            overflow    : hidden;
-            padding     : 0;
-            margin      : 0;
-            -webkit-user-select : none;
-            -moz-user-select    : none;
-        }
-    </style>
 </head>
 <body>
     <script type="text/javascript">
+        // demo logic
+        counter = 0;
+        var actions = ["Hey, how are you?", "So could you stand up for me?", "Can you sit down now so I can shut you off?"];
+
         var JSRobotCalls = new HROS_JS();
         Connect();
+
         function Connect(){
             JSRobotCalls.Connect("localhost");
             $("#connectionStatus").text("Connecting");
@@ -37,18 +33,27 @@
             if(status === JSRobotCalls.ConnectedStates.CONNECTED){
                 $("#actionCalls").show("fast");
                 $("#connectionStatus").text("Connected");
+                $("#batteryLevel").text(JSRobotCalls.BatteryLevel());
+                $("#currenntAction").text(JSRobotCalls.CurrentActionStatus());
+                $("#connectBtn").hide();
+                $("#sayThis").text(actions[counter]);
             }
             else if(status === JSRobotCalls.ConnectedStates.DISCONNECTED){
                 $("#actionCalls").hide();
                 $("#walkingOn").hide();
                 $("#connectionStatus").text("Disconnected");
+                $("#batteryLevel").text("--");
+                $("#currenntAction").text("--");
             }
             else if(status === JSRobotCalls.ConnectedStates.CONNECTING){
                 $("#connectionStatus").text("Connecting")
                 $("#actionCalls").hide();
             }
-            else
+            else {
                 $("#connectionStatus").text("Failed");
+                $("#batteryLevel").text("--");
+                $("#currenntAction").text("--");
+            }
 
         },600);
         /**********************************************************
@@ -74,8 +79,8 @@
 
               // Send X, Y coordinates to Walk Position, 50 < x , y < 50
               JSRobotCalls.WalkPosition(x,y);
-            }
-        }
+          }
+      }
         /**********************************************************
         *****               Walking UI Management
         **********************************************************/
@@ -97,33 +102,74 @@
         /**************************************************/
         function SaySomething() {
             JSRobotCalls.SayString($("#SpeechToSay").val());
+            $("#SpeechToSay").text("");
         }
         /**************************************************
         *****        Natural Language Processor     *******
         /**************************************************/
         function NaturalLanguageProcessor() {
             JSRobotCalls.NaturalLangProc($("#NaturalLanguage").val());
+            $("#NaturalLanguage").text("");
+        }
+
+        
+        function NextAction(){
+            console.log(actions[counter]);
+            if(counter<actions.length) {
+                JSRobotCalls.NaturalLangProc(actions[counter]);
+            }
+            else {
+                JSRobotCalls.SayString("Thats all I got for you");
+            }
+            counter++;
+            
+            if(counter<actions.length)
+                $("#sayThis").text(actions[counter]);
+            else
+                $("#sayThis").text("Anything else you want to ask?");
         }
     </script>
+
+    <div class="menuBar">
+        <span class="statusitem"><span class="glyphicon glyphicon-flash" aria-hidden="true"></span>Connection: <label id="connectionStatus"> Updating...</label></span>
+        <span class="statusitem"><i class="fa fa-battery-half"></i> Battery: <label id="batteryLevel">Updating...</label></span> 
+        <span class="statusitem"><i class="fa fa-cogs"></i> Action: <label id="currenntAction"> Updating...</label></span>
+    </div>
+
         <!--=========================================
             =connectionStatus: HROS looks for connectionStatus to update connection status
             =buttons to call the actions using the object created on init
             =========================================-->
-        <button name="button" onclick="Connect()">Connect</button> 
-        Connection Status: <label id="connectionStatus">Updating...</label>
-        <div style="display:none" id="actionCalls">
-            <button name="button" onclick="JSRobotCalls.PlayAction('stand')">Stand</button>
-            <button name="button" onclick="JSRobotCalls.PlayAction('sit')">Sit</button>
-            <button name="button" onclick="JSRobotCalls.PlayAction('wave')">Wave</button>
-            <button name="button" id="walkToggle" onclick="toggleWalking()">Turn walk on</button>
-            <input class="form-control" id="SpeechToSay" placeholder="What To Say">
-            <button name="button" onclick="SaySomething()">Say Something</button> 
-            <input class="form-control" id="NaturalLanguage" placeholder="Natural Language Processor (Hey, Stand up)">
-            <button name="button" onclick="NaturalLanguageProcessor()">Do it!</button> 
-        </div>
-    <div id="walkingOn" style="display:none">
-        <h3>Select anywhere to activate joystick</h3>
-        <div id="container"></div>
-    </div>
-</body>
-</html>
+            <br/>
+            <div class="connectionbtn" id="connectBtn"><button type="button" class="btn btn-primary" style="font-size:20px;" onclick="Connect()" >Connect</button></div>
+            <div class="containter" style="display:none" id="actionCalls">
+                <div class="row">
+                    <div class="col-md-4">
+                        <h3>Actions</h3>
+                        <button name="button" class="btn btn-primary" onclick="JSRobotCalls.PlayAction('stand')">Stand</button>
+                        <button name="button" class="btn btn-primary" onclick="JSRobotCalls.PlayAction('sit')">Sit</button>
+                        <button name="button" class="btn btn-primary" onclick="JSRobotCalls.PlayAction('wave')">Wave</button>
+                    </div>
+                    <div class="col-md-4">
+                        <h3>Walking</h3>
+                        <button name="button" class="btn btn-primary" id="walkToggle" onclick="toggleWalking()">Turn walk on</button>
+                        <div id="walkingOn" style="display:none">
+                            <h3>Select anywhere to activate joystick</h3>
+                            <div id="container"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <h3>Natural Language &amp; Speech</h3>
+                        <input class="form-control" id="SpeechToSay" placeholder="What To Say">
+                        <button name="button" class="btn btn-primary" onclick="SaySomething()">Say it</button> <br/><br/><br/>
+
+                        <input class="form-control" id="NaturalLanguage" placeholder="Natural Language Processor (Hey, Stand up)">
+                        <button name="button" class="btn btn-primary" onclick="NaturalLanguageProcessor()">Do it!</button> <br/><br/>
+                    </div>
+                </div>
+                <h3>Demo</h3>
+                <h4>Ask the robot: <label id="sayThis"> ... </label></h4>
+                <button type="button" class="btn btn-primary btn-lg" onclick="NextAction()">Next Action</button>
+            </div>
+    </body>
+    </html>
