@@ -14,12 +14,21 @@ All code within project is GPL GNU v3.
 Original source code can be found here:
 https://sourceforge.net/projects/darwinop/
 
-Maintainer
-=================
-* Name: Andrew Dresner
-* Email: andrew@trossenrobotics.com
-* Github: DresnerRobotics
-* Website: http://www.trossenrobotics.com
+This is a project forked from the [original repository](https://github.com/Interbotix/HROS5-Framework/). This work focuses on improvements on the node server particularly housed [here](https://github.com/dalner/HROS5-Framework/tree/master/Linux/project/node_server).
+
+My contact
+=====================
+*Name: Daniel Alner
+*Email: dalner.dev@gmail.com
+
+
+Original Maintainer
+==================
+*Name: Andrew Dresner
+*Email: andrew@trossenrobotics.com
+*Github: DresnerRobotics
+*Website: http://www.trossenrobotics.com
+
 
 Notes
 ==================

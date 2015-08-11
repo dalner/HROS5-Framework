@@ -1,8 +1,11 @@
 /************************************************
-*** Copyright (C) Jul 2015 Daniel Alner
-*** HROS5
-*** GNU GENERAL PUBLIC LICENSE
-************************************************/
+ *   Author: Daniel Alner
+ *   Copyright (C) 2015
+ *
+ *   This program is released under the "GPL GNU v3".
+ *   Please see the file LICENSE in this distribution for
+ *   license terms.
+ *************************************************/
 
 var watson = require('watson-developer-cloud');
 // used for the watson classifer id for natural language

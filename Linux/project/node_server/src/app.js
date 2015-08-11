@@ -3,7 +3,10 @@
  *
  *   Author: Daniel Alner
  *   Copyright (C) 2015
- *   GNU GENERAL PUBLIC LICENSE
+ *
+ *   This program is released under the "GPL GNU v3".
+ *   Please see the file LICENSE in this distribution for
+ *   license terms.
  */
 
 //requirements
